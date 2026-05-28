@@ -5,6 +5,8 @@ from typing import Optional
 from state import TargetSpec
 
 SENTINEL_LOG_DIR = Path.home() / ".local" / "share" / "sentinel" / "logs"
+SENTINEL_STATE_DIR = Path.home() / ".local" / "share" / "sentinel"
+PHAROS_QUEUE_FILE = SENTINEL_STATE_DIR / "pharos-queue.ndjson"
 
 
 def parse_direct_target(ip: str, platform: str = "unknown",
@@ -52,6 +54,29 @@ def load_sentinel_targets(log_dir: str = str(SENTINEL_LOG_DIR)) -> list[TargetSp
                     )
         except Exception:
             continue
+
+    # Also read pharos-queue.ndjson (pre-filtered corpus hits from sentinel)
+    if PHAROS_QUEUE_FILE.exists():
+        try:
+            for line in PHAROS_QUEUE_FILE.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                entry = json.loads(line)
+                ip = entry.get("ip", "")
+                if not ip or ip in targets:
+                    continue
+                targets[ip] = TargetSpec(
+                    ip=ip,
+                    platform=entry.get("platform", "unknown"),
+                    version=entry.get("version"),
+                    cvss=entry.get("cvss", 0.0),
+                    corpus_hit=True,
+                    cve_id=entry.get("cve_id"),
+                )
+        except Exception:
+            pass
+
     return list(targets.values())
 
 

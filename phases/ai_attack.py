@@ -18,7 +18,7 @@ def _cosine_similarity(a: list, b: list) -> float:
     mag_a = math.sqrt(sum(x * x for x in a7))
     mag_b = math.sqrt(sum(x * x for x in b7))
     if mag_a < 1e-9 or mag_b < 1e-9:
-        return 1.0
+        return 0.0  # unknown similarity, not "identical" — avoids masking drift on partial pcse failure
     return dot / (mag_a * mag_b)
 
 

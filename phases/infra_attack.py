@@ -14,6 +14,14 @@ def run_infra_attack(session: RunSession) -> PhaseResult:
     run_dir = session.run_dir
     ip = session.target.ip
 
+    # Check if exploit_surface phase flagged infra_attack as skippable
+    for p in session.phases:
+        if p.phase == "exploit_surface":
+            if "infra_attack" in p.data.get("skip_phases", []):
+                return PhaseResult(phase="infra_attack", status="skipped",
+                                   skip_reason="aimap.json not found — no fingerprint to chain from",
+                                   duration_ms=0)
+
     if not find_tool("visor"):
         return PhaseResult(phase="infra_attack", status="skipped",
                            skip_reason="visor binary not found",

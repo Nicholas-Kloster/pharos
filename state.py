@@ -51,7 +51,10 @@ class RunSession:
     @classmethod
     def create(cls, target: TargetSpec) -> "RunSession":
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-        sid = f"{ts}-{target.ip.replace('.', '-')}"
+        # Sanitize IP for use in filesystem path — strip any chars that aren't alphanumeric, dots, colons, or hyphens
+        import re as _re
+        safe_ip = _re.sub(r'[^a-zA-Z0-9.\-:]', '', target.ip)
+        sid = f"{ts}-{safe_ip.replace('.', '-').replace(':', '-')}"
         run_dir = RUNS_DIR / sid
         run_dir.mkdir(parents=True, exist_ok=True)
         return cls(session_id=sid, target=target, run_dir=run_dir)
